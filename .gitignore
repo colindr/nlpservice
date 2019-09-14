@@ -1,4 +1,6 @@
+.DS_store
 creds.yml
 data
+models
 __pycache__/
 *.py[cod]

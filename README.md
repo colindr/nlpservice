@@ -15,7 +15,7 @@ Here's my TODO list:
   - [x] Build twitter python api
   - [x] Download some sample data from my favorite twitter 
   accounts (@dog_rates and @NateSilver538)
-  - [ ] Learn keras/tensorflow, and build an initial model 
+  - [x] Learn keras/tensorflow, and build an initial model 
   for predicting tweets
   - [ ] Finish setting up Django with postgres, with celery 
   for doing the processing steps.  Redis probably for the celery
@@ -23,3 +23,11 @@ Here's my TODO list:
   - [ ] Set up ELK stack, insert initial tweet data into ELK stack.
   - [ ] Build some initial Kibana visualizations for tweet analysis.
   - [ ] Initial deploy for demo.
+  
+  
+# First Tweet
+We got our first coherent tweet, it's from a model built on @dog_rates:
+```
+this is charlie he just wanted to show you how speedy his tongue and his new bow tie he tied it himself 13 10
+```
+I think it's pretty great.

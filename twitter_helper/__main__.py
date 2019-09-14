@@ -1,5 +1,5 @@
 import os
-from twitter_helper import download_tweets, generate_tweets_text, log
+from twitter_helper import download_tweets, generate_tweets_text, log, model
 import logging
 import argparse
 
@@ -29,7 +29,14 @@ def parse_args():
 
     # model args
     model_parser = subparsers.add_parser("model")
-    model_parser.add_argument("-f", "--file", help="input text file")
+    model_parser.add_argument("-t", "--tweets", help="input tweets file")
+    model_parser.add_argument("-m", "--model", help="output model hdf5 file")
+    model_parser.add_argument("--tokens", help="token map file")
+
+    # tweet args
+    model_parser = subparsers.add_parser("tweet")
+    model_parser.add_argument("-m", "--model", help="output model hdf5 file")
+    model_parser.add_argument("--tokens", help="token map file")
 
     return parser.parse_args()
 
@@ -42,6 +49,10 @@ def main():
         download(args.data_dir, args.users, limit=args.limit, exclude_replies=args.exclude_replies)
     elif args.command == 'process':
         process(args.data_dir, args.users)
+    elif args.command == 'model':
+        model.build_tweet_model(args.tweets, args.model, args.tokens)
+    elif args.command == 'tweet':
+        print(model.tweet_from_model(args.model, args.tokens))
 
 
 def download(samples_dir, handles, limit=None, exclude_replies=False):
