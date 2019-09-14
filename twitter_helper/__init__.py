@@ -7,7 +7,7 @@ from . import utils
 logger = logging.getLogger(__name__)
 
 
-def download_tweets(username: str, output_file: str, limit: int = None, exclude_replies: bool = True):
+def download_tweets(username: str, output_file: str, limit: int = None, exclude_replies: bool = False):
     """
     Download up to `limit` tweets from twitter user `username`. Then
     save to the supplied output path.
@@ -15,23 +15,24 @@ def download_tweets(username: str, output_file: str, limit: int = None, exclude_
     :param username: twitter screen_name to donwload tweets from
     :param output_file: file to write the raw data to
     :param limit: optionally limit the number of tweets to download
+    :param exclude_replies: whether or not to exclude replies
     """
     creds = utils.creds()
 
     with open(output_file, 'w') as fp:
 
         # connect to twitter API
-        api = twitter.Api(**creds)
+        api = twitter.Api(**creds, tweet_mode='extended')
 
         earliest_tweet = None
         count = 0
 
         while limit is None or count < limit:
             # get 200 tweets at a time
-            logger.info("getting tweets before:", earliest_tweet)
+            logger.info(f"getting tweets before: {earliest_tweet}")
             tweets = api.GetUserTimeline(
                 screen_name=username, max_id=earliest_tweet, count=200,
-                exclude_replies=exclude_replies
+                exclude_replies=exclude_replies, trim_user=True,
             )
 
             count += len(tweets)
@@ -54,9 +55,8 @@ def generate_tweets_text(raw_file: str, tweet_text_file: str, reply_text_file: s
     two separate files; one that contains the full text of all tweets, the other
     that contains the full text of all replies.
 
-    We also do some pre-processing of the full_text to remove some junk.  This
-    means:
-
+    We also do some pre-processing of the full_text to remove some junk, which
+    calls the clean_tweet_text function.
 
     :param raw_file:
     :param tweet_text_file:
@@ -67,13 +67,19 @@ def generate_tweets_text(raw_file: str, tweet_text_file: str, reply_text_file: s
         with open(tweet_text_file, 'w') as tweet_fp:
             with open(reply_text_file, 'w') as reply_fp:
                 line = raw_fp.readline()
-                data = json.loads(line)
-                full_text = data['full_text']
-                full_text = clean_tweet_text(full_text)
-                if "in_reply_to_screen_name" not in data:
-                    tweet_fp.write(full_text+'\n')
-                else:
-                    reply_fp.write(full_text+'\n')
+                while line:
+                    data = json.loads(line)
+                    logger.debug(data)
+                    # full_text only exists if you instantiate your twitter
+                    # connection with the tweet_mode='extended'
+                    full_text = data.get('full_text') or data.get('text')
+                    full_text = clean_tweet_text(full_text)
+                    if "in_reply_to_screen_name" not in data:
+                        tweet_fp.write(full_text + '\n')
+                    else:
+                        reply_fp.write(full_text + '\n')
+
+                    line = raw_fp.readline()
 
 
 def clean_tweet_text(text: str) -> str:
