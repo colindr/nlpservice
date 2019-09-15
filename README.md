@@ -17,7 +17,7 @@ Here's my TODO list:
   accounts (@dog_rates and @NateSilver538)
   - [x] Learn keras/tensorflow, and build an initial model 
   for predicting tweets
-  - [ ] Finish setting up Django with postgres, with celery 
+  - [x] Finish setting up Django with postgres, with celery 
   for doing the processing steps.  Redis probably for the celery
   backend.
   - [ ] Set up ELK stack, insert initial tweet data into ELK stack.

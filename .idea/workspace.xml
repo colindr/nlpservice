@@ -2,33 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="38489b94-b6f0-48b7-8481-6505e39d66b8" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/django/nlpservice/celery.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/django/nlptwitter/models.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/django/nlptwitter/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/django/nlptwitter/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/django/nlptwitter/views.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/django/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/nlpservice.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/nlpservice.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/manage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/nlpservice/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/tests/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/nlptwitter/tests/conftest.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/tests/test_process_tweets.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/nlptwitter/tests/test_process_tweets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/nlpservice/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/nlpservice/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservice/wsgi.py" beforeDir="false" afterPath="$PROJECT_DIR$/django/nlpservice/wsgi.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/twitter_helper/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tweetnlp/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/twitter_helper/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tweetnlp/__main__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/twitter_helper/log.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tweetnlp/log.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/twitter_helper/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tweetnlp/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/twitter_helper/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tweetnlp/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -308,7 +282,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1568431644641</updated>
-      <workItem from="1568478791746" duration="27919000" />
+      <workItem from="1568478791746" duration="28126000" />
     </task>
     <servers />
   </component>
