@@ -27,10 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+DATA_ROOT = '/data'
 
 # Application definition
 
 INSTALLED_APPS = [
+    'nlptwitter.apps.NlptwitterConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -77,8 +80,11 @@ WSGI_APPLICATION = 'nlpservice.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': os.getenv('NLPSERVICE_DB_HOST', 'db'),
+        'PORT': os.getenv('NLPSERVICE_DB_PORT', 5432),
     }
 }
 
@@ -101,6 +107,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# celery
+NLPSERVICE_REDIS_HOST = os.getenv('NLPSERVICE_REDIS_HOST', 'redis')
+NLPSERVICE_REDIS_PORT = os.getenv('NLPSERVICE_REDIS_HOST', 6379)
+CELERY_BROKER_URL = f'redis://{NLPSERVICE_REDIS_HOST}:{NLPSERVICE_REDIS_PORT}'
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/

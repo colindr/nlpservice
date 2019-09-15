@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  db:
+    # TODO: pgbouncer
+    image: postgres
+  web:
+    build: .
+    image: colindr/nlpservice
+    # TODO: gunicorn and nginx
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code:ro
+      - model_data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+  redis:
+    image: redis
+  worker:
+    build: .
+    image: colindr/nlpservice
+    command: celery -A nlpservice worker -l info
+    volumes:
+      - .:/code:ro
+      - model_data:/data
+      - ./lib/tweetnlp:/usr/local/lib/python3.7/site-packages/tweetnlp:ro
+
+
+volumes:
+  model_data:

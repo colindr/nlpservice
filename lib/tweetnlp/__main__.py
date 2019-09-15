@@ -53,6 +53,8 @@ def main():
         model.build_tweet_model(args.tweets, args.model, args.tokens)
     elif args.command == 'tweet':
         print(model.tweet_from_model(args.model, args.tokens))
+    elif args.command == 'predict':
+        model.predict(args.model, args.tokens)
 
 
 def download(samples_dir, handles, limit=None, exclude_replies=False):

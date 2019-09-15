@@ -1,28 +1,7 @@
-import numpy
-import tensorflow
-import keras
+
 import logging
 
-#
-# from keras.models import Sequential, load_model
-# from keras.layers import Dense, Activation
-# from keras.layers import LSTM, Dropout
-# from keras.layers import TimeDistributed
-# from keras.layers.core import Dense, Activation, Dropout, RepeatVector
-# from keras.optimizers import RMSprop
-#
-# import matplotlib.pyplot as plt
-# import pickle
-# import sys
-# import heapq
-# import seaborn as sns
-# from pylab import rcParams
-
 logger = logging.getLogger(__name__)
-
-# not sure if these need to be the same
-numpy.random.seed(42)
-tensorflow.compat.v1.set_random_seed(42)
 
 # these are special words that we assume nobody is using in actual
 # tweets.  There's probably a better actual way to do this, but
@@ -35,6 +14,14 @@ MAX_TWEET_LENGTH = 280
 
 # this loads the tweets and
 def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str):
+    import numpy
+    import tensorflow
+    import keras
+
+    # not sure if these need to be the same
+    numpy.random.seed(42)
+    tensorflow.compat.v1.set_random_seed(42)
+
     # this was built from this tutorial:
     # https://machinelearningmastery.com/develop-word-based-neural-language-models-python-keras/
     with open(tweet_text, 'r') as fp:
@@ -102,6 +89,7 @@ def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str):
 
 
 def tweet_from_model(model_file: str, tokenizer_file: str):
+    import keras
     with open(tokenizer_file, 'r') as fp:
         tokenizer = keras.preprocessing.text.tokenizer_from_json(fp.read())
 
@@ -112,6 +100,8 @@ def tweet_from_model(model_file: str, tokenizer_file: str):
 
 # generate a sequence from the model
 def generate_tweet(model, tokenizer):
+    import numpy
+
     last_words = [STARTOFTWEET, STARTOFTWEET]
     length = 0
     tweet = []
@@ -132,3 +122,11 @@ def generate_tweet(model, tokenizer):
         last_words = [last_words[-1], next_word]
 
     return ' '.join(tweet)
+
+
+def predict(model_file: str, tokenizer_file: str):
+    import keras
+    with open(tokenizer_file, 'r') as fp:
+        tokenizer = keras.preprocessing.text.tokenizer_from_json(fp.read())
+
+    model = keras.models.load_model(model_file)
