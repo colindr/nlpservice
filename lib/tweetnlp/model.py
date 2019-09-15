@@ -126,7 +126,75 @@ def generate_tweet(model, tokenizer):
 
 def predict(model_file: str, tokenizer_file: str):
     import keras
+    import numpy
+
     with open(tokenizer_file, 'r') as fp:
         tokenizer = keras.preprocessing.text.tokenizer_from_json(fp.read())
 
     model = keras.models.load_model(model_file)
+
+    def predict_one(last_words):
+        encoded = numpy.array([[tokenizer.word_index[w] for w in last_words]])
+        # predict a word in the vocabulary
+        yhat = model.predict_classes(encoded, verbose=0)[0]
+        # map predicted word index to word
+        next_word = tokenizer.index_word[yhat]
+        logger.debug(f'got next word {next_word} from last words {last_words}')
+        return next_word
+
+    def draw_predictions(stdscr):
+        k = 0
+        cursor_x = 0
+        cursor_y = 0
+        last_words = [STARTOFTWEET, STARTOFTWEET]
+        tweet_words = []
+        word_in_progress = ""
+
+        prediction = predict_one(last_words)
+
+        # Clear and refresh the screen for a blank canvas
+        stdscr.clear()
+        stdscr.refresh()
+
+        curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+        while True:
+            # Initialization
+            stdscr.clear()
+            height, width = stdscr.getmaxyx()
+            stdscr.addstr(f"input: {word_in_progress}\n")
+            stdscr.addstr(f"prediction: {prediction}\n")
+            stdscr.addstr(f"tweet: {' '.join(tweet_words)}\n")
+
+            k = stdscr.getch()
+            if chr(k) in ["\n"]:
+                if word_in_progress == "":
+                    next_word = prediction
+                else:
+                    next_word = word_in_progress
+
+                if next_word == 'endoftweet':
+                    break
+
+                last_words = [last_words[-1], next_word]
+                tweet_words.append(next_word)
+                word_in_progress = ""
+                prediction = predict_one(last_words)
+
+            elif chr(k) in [" "]:
+                continue
+            else:
+                word_in_progress += chr(k)
+
+        stdscr.clear()
+        stdscr.addstr(f"tweet: {' '.join(tweet_words)}\n")
+        # one more char for ending
+        stdscr.getch()
+
+    import curses
+    try:
+        curses.wrapper(draw_predictions)
+    except KeyboardInterrupt:
+        pass
