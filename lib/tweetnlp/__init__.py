@@ -22,7 +22,7 @@ def download_tweets(username: str, output_file: str, limit: int = None, exclude_
     with open(output_file, 'w') as fp:
 
         # connect to twitter API
-        api = twitter.Api(**creds, tweet_mode='extended')
+        api = twitter.Api(**creds, tweet_mode='extended', sleep_on_rate_limit=True)
 
         earliest_tweet = None
         count = 0
@@ -30,17 +30,24 @@ def download_tweets(username: str, output_file: str, limit: int = None, exclude_
         while limit is None or count < limit:
             # get 200 tweets at a time
             logger.info(f"getting tweets before: {earliest_tweet}")
-            tweets = api.GetUserTimeline(
+            all_tweets = api.GetUserTimeline(
                 screen_name=username, max_id=earliest_tweet, count=200,
-                exclude_replies=exclude_replies, trim_user=True,
+                exclude_replies=False, trim_user=True,
             )
 
+            new_earliest = min(all_tweets, key=lambda x: x.id).id
+
+            if exclude_replies:
+                tweets = [t for t in all_tweets if not t.in_reply_to_screen_name]
+            else:
+                tweets = all_tweets
+
             count += len(tweets)
-            new_earliest = min(tweets, key=lambda x: x.id).id
 
             # if we haven't gotten any tweets, or the new tweets are the same
             # as the old, break
-            if not tweets or new_earliest == earliest_tweet:
+            if not all_tweets or new_earliest == earliest_tweet:
+                logger.info(f'count: {count} tweetlen:{len(all_tweets)} new_earliest:{new_earliest} earliest:{earliest_tweet}')
                 break
             else:
                 # write the tweets separated by newlines
@@ -48,7 +55,7 @@ def download_tweets(username: str, output_file: str, limit: int = None, exclude_
                 earliest_tweet = new_earliest
 
 
-def generate_tweets_text(raw_file: str, tweet_text_file: str, reply_text_file: str):
+def generate_tweets_text(raw_file: str, tweet_text_file: str):
     """
     The raw file format is a series of lines  of json, so we load the raw_file
     line-by-line, decode the json, read the fields we care about, and write out
@@ -60,26 +67,20 @@ def generate_tweets_text(raw_file: str, tweet_text_file: str, reply_text_file: s
 
     :param raw_file:
     :param tweet_text_file:
-    :param reply_text_file:
     """
 
     with open(raw_file, 'r') as raw_fp:
         with open(tweet_text_file, 'w') as tweet_fp:
-            with open(reply_text_file, 'w') as reply_fp:
+            line = raw_fp.readline()
+            while line:
+                data = json.loads(line)
+                logger.debug(data)
+                # full_text only exists if you instantiate your twitter
+                # connection with the tweet_mode='extended'
+                full_text = data.get('full_text') or data.get('text')
+                full_text = clean_tweet_text(full_text)
+                tweet_fp.write(full_text + '\n')
                 line = raw_fp.readline()
-                while line:
-                    data = json.loads(line)
-                    logger.debug(data)
-                    # full_text only exists if you instantiate your twitter
-                    # connection with the tweet_mode='extended'
-                    full_text = data.get('full_text') or data.get('text')
-                    full_text = clean_tweet_text(full_text)
-                    if "in_reply_to_screen_name" not in data:
-                        tweet_fp.write(full_text + '\n')
-                    else:
-                        reply_fp.write(full_text + '\n')
-
-                    line = raw_fp.readline()
 
 
 def clean_tweet_text(text: str) -> str:

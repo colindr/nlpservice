@@ -10,8 +10,12 @@ services:
     # TODO: gunicorn and nginx
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/code:ro
+      - .:/code
       - model_data:/data
+    environment:
+      NLPSERVICE_REDIS_HOST: redis
+      NLPSERVICE_REDIS_PORT: 6379
+      NLPSERVICE_REDIS_TWEETS_QUEUE_KEY: tweets_queue
     ports:
       - "8000:8000"
     depends_on:
@@ -23,11 +27,46 @@ services:
     build: .
     image: colindr/nlpservice
     command: celery -A nlpservice worker -l info
+    environment:
+      NLPSERVICE_REDIS_HOST: redis
+      NLPSERVICE_REDIS_PORT: 6379
+      NLPSERVICE_REDIS_TWEETS_QUEUE_KEY: tweets_queue
     volumes:
       - .:/code:ro
       - model_data:/data
       - ./lib/tweetnlp:/usr/local/lib/python3.7/site-packages/tweetnlp:ro
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+    environment:
+      - node.name=es
+      - discovery.type=single-node
+      - cluster.name=nlpservice-es
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.3.2
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports:
+      - 5601:5601
+  logstash:
+    build: logstash
+    environment:
+      NLPSERVICE_REDIS_HOST: redis
+      NLPSERVICE_REDIS_PORT: 6379
+      NLPSERVICE_REDIS_TWEETS_QUEUE_KEY: tweets_queue
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+
 
 
 volumes:
   model_data:
+  esdata:

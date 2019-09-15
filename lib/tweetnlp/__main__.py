@@ -72,8 +72,7 @@ def process(samples_dir, handles):
     for handle in handles:
         raw_file = os.path.join(samples_dir, f'{handle}.raw')
         tweets_file = os.path.join(samples_dir, f'{handle}.tweets.txt')
-        replies_file = os.path.join(samples_dir, f'{handle}.replies.txt')
-        generate_tweets_text(raw_file, tweets_file, replies_file)
+        generate_tweets_text(raw_file, tweets_file)
 
 
 if __name__ == '__main__':

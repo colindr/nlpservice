@@ -20,10 +20,10 @@ Here's my TODO list:
   - [x] Finish setting up Django with postgres, with celery 
   for doing the processing steps.  Redis probably for the celery
   backend.
-  - [ ] Set up ELK stack, insert initial tweet data into ELK stack.
+  - [x] Add epochs and exclude_replies options for tweeters.
+  - [x] Set up ELK stack, insert initial tweet data into ELK stack.
   - [ ] Build some initial Kibana visualizations for tweet analysis.
   - [ ] Initial deploy for demo.
-  - [ ] Add epochs and exclude_replies options for tweeters.
   - [ ] Support updating limit and epochs and exclude_replies. 
   If limit or exclude_replies is updated then we need to re-download, 
   and if epochs is updated then we just need to re-model.
@@ -32,6 +32,7 @@ Here's my TODO list:
   - [ ] Create API for just predicting words in the voice of a particular
   tweeter.  Needs to be fast, probably caching the model and tokenizer 
   instances.  Probably an action on the tweeter.
+  - [ ] Update model to use pre-trained embedding layer.
   
   
 # First Tweet

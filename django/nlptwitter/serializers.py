@@ -5,10 +5,10 @@ from rest_framework import serializers
 class TweeterSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Tweeter
-        fields = ['url', 'username', 'status', 'limit', 'raw_file', 'tweets_file',
-                  'replies_file', 'model_file', 'tokenizer_file']
+        fields = ['url', 'username', 'status', 'limit', 'epochs', 'exclude_replies',
+                  'raw_file', 'tweets_file', 'model_file', 'tokenizer_file']
         read_only_fields = ['raw_file', 'tweets_file',
-                            'replies_file', 'model_file', 'tokenizer_file']
+                            'model_file', 'tokenizer_file']
 
 
 class TweetSerializer(serializers.HyperlinkedModelSerializer):

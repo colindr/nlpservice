@@ -13,7 +13,7 @@ MAX_TWEET_LENGTH = 280
 
 
 # this loads the tweets and
-def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str):
+def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str, epochs: int = 50):
     import numpy
     import tensorflow
     import keras
@@ -79,7 +79,7 @@ def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str):
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     # fit network
-    model.fit(x, y, epochs=50, verbose=2)
+    model.fit(x, y, epochs=epochs, verbose=2)
 
     # save the model
     model.save(model_file)

@@ -33,23 +33,24 @@ class TweeterViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
 
-        t = Tweeter(username=username,
-                    raw_file=os.path.join(user_path, f'{username}.raw'),
+        t = Tweeter(raw_file=os.path.join(user_path, f'{username}.raw'),
                     tweets_file=os.path.join(user_path, f'{username}.tweets.txt'),
-                    replies_file=os.path.join(user_path, f'{username}.replies.txt'),
                     model_file=os.path.join(user_path, f'{username}.model.hdf5'),
-                    tokenizer_file=os.path.join(user_path, f'{username}.tokenizer')
+                    tokenizer_file=os.path.join(user_path, f'{username}.tokenizer'),
+                    **serializer.validated_data
                     )
 
         t.save()
 
         post_create_tasks.delay(
             t.username,
+            t.limit,
+            t.epochs,
+            t.exclude_replies,
             t.raw_file,
             t.tweets_file,
-            t.replies_file,
             t.model_file,
-            t.tokenizer_file
+            t.tokenizer_file,
         )
 
         serializer = TweeterSerializer(t, context={'request': request})
