@@ -1,5 +1,10 @@
 
 import logging
+import os
+import numpy
+import json
+from typing import Dict, Callable
+
 
 logger = logging.getLogger(__name__)
 
@@ -12,8 +17,54 @@ ENDOFTWEET = 'endoftweet'
 MAX_TWEET_LENGTH = 280
 
 
+def read_glove_file(glove_file: str) -> (Dict[str, int], Dict[int, str], Dict):
+    with open(glove_file, 'r') as f:
+        word_glove = {}  # map from a token (word) to a Glove embedding vector
+
+        for line in f:
+            record = line.strip().split()
+            token = record[0]  # take the token (word) from the text line
+            word_glove[token] = numpy.array(record[1:],
+                                            # associate the Glove embedding vector to a that token (word)
+                                            dtype=numpy.float64)
+
+    return word_glove
+
+
+def glove_file(embedding_dim: int = 25) -> str:
+    path = f"glove/glove.twitter.27B.{embedding_dim}d.txt"
+    return os.path.join(os.path.dirname(__file__), path)
+
+
+def create_pretrained_embedding_matrix(word_glove, word_index: Dict[str, int], vocab_size: int, embedding_dim: int = 25) -> (int, numpy.array):
+
+    embeddingMatrix = numpy.zeros((vocab_size, embedding_dim))  # initialize with zeros
+    for word, index in word_index.items():
+        if word in word_glove:
+            embeddingMatrix[index, :] = word_glove[word]  # create embedding: word index to Glove word embedding
+
+    # make sure we set the STARTOFTWEET and ENDOFTWEET values to be different
+    embeddingMatrix[vocab_size - 1] = [0] * embedding_dim
+    embeddingMatrix[vocab_size - 2] = [1] * embedding_dim
+
+    return embeddingMatrix
+
+
+def glove_embedding(vocab_size: int, embedding_dim: int, input_length: int, word_index: Dict[str, int]):
+    import keras
+
+    word_glove = read_glove_file(glove_file(embedding_dim))
+    emb_matrix = create_pretrained_embedding_matrix(word_glove, word_index, vocab_size, embedding_dim)
+    embedding = keras.layers.Embedding(vocab_size, embedding_dim, weights=[emb_matrix],
+                                       input_length=input_length, trainable=False)
+
+    return embedding
+
+
 # this loads the tweets and
-def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str, epochs: int = 50):
+def build_tweet_model(tweet_text: str, model_file: str, tokenizer_file: str,
+                      epochs: int = 50, embedding_dim: int = 25,
+                      pre_trained_embedding: bool = False, stats_callback: Callable = None):
     import numpy
     import tensorflow
     import keras
@@ -28,18 +79,26 @@ def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str, epo
         # each line is a tweet
         tweets = fp.readlines()
         # data is just all the words in the tweets
-        data = f'{STARTOFTWEET} '
+        data = ''
         for tweet in tweets:
-            data += tweet.strip() + f' {ENDOFTWEET} {STARTOFTWEET} '
+            data += tweet.strip()
 
-        data = data.strip() + f' {ENDOFTWEET}'
+        data = data.strip()
 
     tokenizer = keras.preprocessing.text.Tokenizer()
     tokenizer.fit_on_texts([data])
     encoded_tweets = tokenizer.texts_to_sequences(tweets)
 
-    vocab_size = len(tokenizer.word_index) + 1
+    vocab_size = len(tokenizer.word_index) + 3
     print('Vocabulary Size: %d' % vocab_size)
+
+    word_index = tokenizer.word_index.copy()
+    word_index[STARTOFTWEET] = vocab_size-1
+    word_index[ENDOFTWEET] = vocab_size-2
+
+    index_word = tokenizer.index_word.copy()
+    index_word[vocab_size-1] = STARTOFTWEET
+    index_word[vocab_size-2] = ENDOFTWEET
 
     # create word -> word sequences
     sequences = list()
@@ -47,17 +106,22 @@ def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str, epo
         if len(tweet) < 2:
             continue
         # start of tweet sequence
-        sequences.append([tokenizer.word_index[STARTOFTWEET], tokenizer.word_index[STARTOFTWEET], tweet[0]])
-        sequences.append([tokenizer.word_index[STARTOFTWEET], tweet[0], tweet[1]])
+        sequences.append([word_index[STARTOFTWEET], word_index[STARTOFTWEET], tweet[0]])
+        sequences.append([word_index[STARTOFTWEET], tweet[0], tweet[1]])
         # word -> next_word sequences
         for i in range(2, len(tweet)):
-            sequences.append(tweet[i-2:i+1])
+            sequences.append(tweet[i - 2:i + 1])
 
         # end of tweet sequence
-        sequences.append([tweet[-2], tweet[-1], tokenizer.word_index[ENDOFTWEET]])
-        sequences.append([tweet[-1], tokenizer.word_index[ENDOFTWEET], tokenizer.word_index[ENDOFTWEET]])
+        sequences.append([tweet[-2], tweet[-1], word_index[ENDOFTWEET]])
+        sequences.append([tweet[-1], word_index[ENDOFTWEET], word_index[ENDOFTWEET]])
 
     print('Total Sequences: %d' % len(sequences))
+
+    if pre_trained_embedding:
+        embedding = glove_embedding(vocab_size, embedding_dim, 2, tokenizer.word_index)
+    else:
+        embedding = keras.layers.Embedding(vocab_size, embedding_dim, input_length=2)
 
     # x is the set of input words, y is the set of output words
     sequences = numpy.array(sequences)
@@ -70,7 +134,8 @@ def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str, epo
 
     # define model
     model = keras.models.Sequential()
-    model.add(keras.layers.Embedding(vocab_size, 100, input_length=2))
+
+    model.add(embedding)
     model.add(keras.layers.LSTM(50))
     model.add(keras.layers.core.Dense(vocab_size, activation='softmax'))
     print(model.summary())
@@ -84,33 +149,45 @@ def build_tweet_model(tweet_text: str, model_file: str, token_map_file: str, epo
     # save the model
     model.save(model_file)
 
-    with open(token_map_file, 'w') as fp:
-        fp.write(tokenizer.to_json())
+    with open(tokenizer_file, 'w') as fp:
+        fp.write(json.dumps([word_index, index_word]))
 
 
-def tweet_from_model(model_file: str, tokenizer_file: str):
+def tweet_from_model(model_file: str, tokenizer_file: str, pre_trained_embedding: bool = False, embedding_dim: int = 25):
     import keras
-    with open(tokenizer_file, 'r') as fp:
-        tokenizer = keras.preprocessing.text.tokenizer_from_json(fp.read())
+    word_index, index_word = get_predict_maps(tokenizer_file, pre_trained_embedding, embedding_dim)
 
     model = keras.models.load_model(model_file)
 
-    return generate_tweet(model, tokenizer)
+    return generate_tweet(model, word_index, index_word)
+
+
+def get_predict_maps(tokenizer_file: str, pre_trained_embedding: bool, embedding_dim: int):
+    import keras
+    if pre_trained_embedding:
+        word_index, index_word, _ = read_glove_file(glove_file(embedding_dim))
+    else:
+        with open(tokenizer_file, 'r') as fp:
+            word_index, index_word = json.load(fp)
+
+    # somehow these get str keys
+    index_word = {int(k):v for k,v in index_word.items()}
+    return word_index, index_word
 
 
 # generate a sequence from the model
-def generate_tweet(model, tokenizer):
+def generate_tweet(model, word_index, index_word):
     import numpy
 
     last_words = [STARTOFTWEET, STARTOFTWEET]
     length = 0
     tweet = []
     while True:
-        encoded = numpy.array([[tokenizer.word_index[w] for w in last_words]])
+        encoded = numpy.array([[word_index.get(w, 0) for w in last_words]])
         # predict a word in the vocabulary
         yhat = model.predict_classes(encoded, verbose=0)[0]
         # map predicted word index to word
-        next_word = tokenizer.index_word[yhat]
+        next_word = index_word[yhat]
         logger.debug(f'got next word {next_word} from last words {last_words}')
         if next_word == ENDOFTWEET:
             break
@@ -124,21 +201,20 @@ def generate_tweet(model, tokenizer):
     return ' '.join(tweet)
 
 
-def predict(model_file: str, tokenizer_file: str):
+def predict(model_file: str, tokenizer_file: str, pre_trained_embedding: bool = False, embedding_dim: int = 25):
     import keras
     import numpy
 
-    with open(tokenizer_file, 'r') as fp:
-        tokenizer = keras.preprocessing.text.tokenizer_from_json(fp.read())
+    word_index, index_word = get_predict_maps(tokenizer_file, pre_trained_embedding, embedding_dim)
 
     model = keras.models.load_model(model_file)
 
     def predict_one(last_words):
-        encoded = numpy.array([[tokenizer.word_index[w] for w in last_words]])
+        encoded = numpy.array([[word_index.get(w, 0) for w in last_words]])
         # predict a word in the vocabulary
         yhat = model.predict_classes(encoded, verbose=0)[0]
         # map predicted word index to word
-        next_word = tokenizer.index_word[yhat]
+        next_word = index_word[yhat]
         logger.debug(f'got next word {next_word} from last words {last_words}')
         return next_word
 
@@ -185,6 +261,9 @@ def predict(model_file: str, tokenizer_file: str):
 
             elif chr(k) in [" "]:
                 continue
+            elif k == 127:
+                if word_in_progress:
+                    word_in_progress = word_in_progress[:-1]
             else:
                 word_in_progress += chr(k)
 

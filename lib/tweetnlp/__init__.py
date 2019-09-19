@@ -73,7 +73,12 @@ def generate_tweets_text(raw_file: str, tweet_text_file: str):
         with open(tweet_text_file, 'w') as tweet_fp:
             line = raw_fp.readline()
             while line:
-                data = json.loads(line)
+                if not line.strip():
+                    line = raw_fp.readline()
+                    continue
+
+                data = json.loads(line.strip())
+
                 logger.debug(data)
                 # full_text only exists if you instantiate your twitter
                 # connection with the tweet_mode='extended'

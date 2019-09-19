@@ -1,7 +1,8 @@
 .idea
 .DS_store
-creds.yml
+creds.json
 data
+pretrained
 models
 __pycache__/
 *.py[cod]

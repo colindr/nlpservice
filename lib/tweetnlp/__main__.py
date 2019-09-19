@@ -11,37 +11,41 @@ def parse_args():
 
     # download args
     download_parser = subparsers.add_parser("download")
-    download_parser.add_argument("-u", "--users", nargs="+",
-                                 help="user names to download and process tweets for")
+    download_parser.add_argument("user",
+                                 help="user name to download and process tweets for")
+    download_parser.add_argument("data_dir",
+                                 help="directory to read/write data from")
     download_parser.add_argument("-l", "--limit", type=int, default=10000,
                                  help="limit the number of tweets to download")
-    download_parser.add_argument("--data-dir",
-                                 help="directory to read/write data from")
     download_parser.add_argument("--exclude-replies", action='store_true',
                                  help="don't even download replies")
 
     # process args
     process_parser = subparsers.add_parser("process")
-    process_parser.add_argument("-u", "--users", nargs="+",
-                                help="user names to download and process tweets for")
-    process_parser.add_argument("--data-dir",
+    process_parser.add_argument("user", help="user name to download and process tweets for")
+    process_parser.add_argument("data_dir",
                                 help="directory to read/write data from")
 
     # model args
     model_parser = subparsers.add_parser("model")
-    model_parser.add_argument("-t", "--tweets", help="input tweets file")
-    model_parser.add_argument("-m", "--model", help="output model hdf5 file")
-    model_parser.add_argument("--tokens", help="token map file")
+    model_parser.add_argument("user", help="input tweets file")
+    model_parser.add_argument("data_dir",
+                              help="directory to read/write data from")
+    model_parser.add_argument('--epochs', type=int, default=50)
+    model_parser.add_argument('--pre-trained', action='store_true')
 
     # tweet args
-    model_parser = subparsers.add_parser("tweet")
-    model_parser.add_argument("-m", "--model", help="output model hdf5 file")
-    model_parser.add_argument("--tokens", help="token map file")
+    tweet_parser = subparsers.add_parser("tweet")
+    tweet_parser.add_argument("user", help="input tweets file")
+    tweet_parser.add_argument("data_dir",
+                              help="directory to read/write data from")
+    tweet_parser.add_argument('--pre-trained', action='store_true')
 
     # predict args
-    model_parser = subparsers.add_parser("predict")
-    model_parser.add_argument("-m", "--model", help="output model hdf5 file")
-    model_parser.add_argument("-t", "--tokenizer", help="tokeniz file")
+    predict_parser = subparsers.add_parser("predict")
+    predict_parser.add_argument("model_file")
+    predict_parser.add_argument("tokenizer_file")
+    predict_parser.add_argument('--pre-trained', action='store_true')
 
     return parser.parse_args()
 
@@ -51,28 +55,24 @@ def main():
     log.setup_logging(args.verbose)
 
     if args.command == 'download':
-        download(args.data_dir, args.users, limit=args.limit, exclude_replies=args.exclude_replies)
+        raw_file = os.path.join(args.data_dir, 'tweets', f'{args.user}.raw')
+        download_tweets(args.user, raw_file, limit=args.limit, exclude_replies=args.exclude_replies)
     elif args.command == 'process':
-        process(args.data_dir, args.users)
-    elif args.command == 'model':
-        model.build_tweet_model(args.tweets, args.model, args.tokens)
-    elif args.command == 'tweet':
-        print(model.tweet_from_model(args.model, args.tokens))
-    elif args.command == 'predict':
-        model.predict(args.model, args.tokenizer)
-
-
-def download(samples_dir, handles, limit=None, exclude_replies=False):
-    for handle in handles:
-        raw_file = os.path.join(samples_dir, f'{handle}.raw')
-        download_tweets(handle, raw_file, limit=limit, exclude_replies=exclude_replies)
-
-
-def process(samples_dir, handles):
-    for handle in handles:
-        raw_file = os.path.join(samples_dir, f'{handle}.raw')
-        tweets_file = os.path.join(samples_dir, f'{handle}.tweets.txt')
+        raw_file = os.path.join(args.data_dir, 'tweets', f'{args.user}.raw')
+        tweets_file = os.path.join(args.data_dir, 'tweets', f'{args.user}.tweets.txt')
         generate_tweets_text(raw_file, tweets_file)
+    elif args.command == 'model':
+        tweets_file = os.path.join(args.data_dir, 'tweets', f'{args.user}.tweets.txt')
+        model_file = os.path.join(args.data_dir, 'models', f'{args.user}.model.hdf5')
+        tokenizer_file = os.path.join(args.data_dir, 'models', f'{args.user}.tokenizer')
+        model.build_tweet_model(tweets_file, model_file, tokenizer_file, pre_trained_embedding=args.pre_trained,
+                                epochs=args.epochs)
+    elif args.command == 'tweet':
+        model_file = os.path.join(args.data_dir, 'models', f'{args.user}.model.hdf5')
+        tokenizer_file = os.path.join(args.data_dir, 'models', f'{args.user}.tokenizer')
+        print(model.tweet_from_model(model_file, tokenizer_file, args.pre_trained))
+    elif args.command == 'predict':
+        model.predict(args.model_file, args.tokenizer_file, args.pre_trained)
 
 
 if __name__ == '__main__':

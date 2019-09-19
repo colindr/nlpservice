@@ -4,7 +4,7 @@ from . import views
 
 
 router = routers.DefaultRouter()
-router.register(r'tweeters', views.TweeterViewSet)
+router.register(r'tweeters', views.TweeterModelViewSet)
 router.register(r'tweets', views.TweetViewSet)
 
 # Wire up our API using automatic URL routing.

@@ -1,0 +1,27 @@
+{
+  "index_patterns": [
+    "tweets"
+  ],
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "_doc": {
+      "_source": {
+        "enabled": false
+      },
+      "properties": {
+        "host_name": {
+          "type": "keyword"
+        },
+        "full_text": {
+          "type": "text"
+        },
+        "created_at": {
+          "type": "date",
+          "format": "EEE MMM dd HH:mm:ss Z YYYY"
+        }
+      }
+    }
+  }
+}

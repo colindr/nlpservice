@@ -8,7 +8,8 @@ COPY lib/requirements.txt /code/lib/requirements.txt
 RUN pip install -r /code/lib/requirements.txt
 
 # install tweetnlp
-COPY lib /code/lib
+COPY lib/tweetnlp /code/lib/tweetnlp
+COPY lib/setup.py /code/lib/setup.py
 RUN pip install ./lib
 
 # copy django deps
@@ -19,7 +20,7 @@ RUN pip install -r django/requirements.txt
 COPY django /code/django
 
 RUN mkdir /data
-COPY creds.yml /creds.yml
-ENV NLPSERVICE_TWITTER_CREDS_FILE  /creds.yml
+COPY creds.json /creds.json
+ENV NLPSERVICE_TWITTER_CREDS_FILE  /creds.json
 
 WORKDIR /code/django

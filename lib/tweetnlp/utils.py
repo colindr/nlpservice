@@ -1,4 +1,4 @@
-import yaml
+import json
 import logging
 import os
 
@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 CREDS_FILE_ENV_VAR = 'NLPSERVICE_TWITTER_CREDS_FILE'
 
-DEFAULT_CREDS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'creds.yml')
+DEFAULT_CREDS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'creds.json')
 
 # credentials type
 Creds = Dict[str, str]
@@ -25,4 +25,4 @@ def creds() -> Creds:
 
     with open(creds_yml, 'r') as fp:
         # TODO: check that all credentials exist
-        return yaml.load(fp)
+        return json.load(fp)
